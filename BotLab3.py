@@ -1,5 +1,6 @@
 import telebot
 import requests
+import json
 bot = telebot.TeleBot("1785272821:AAF0P6xd5OwL5T1cJ-kiHalnupP30tlhMng")
 keyboard_change = telebot.types.ReplyKeyboardMarkup(True)
 keyboard_change.row('1 задание', '/Диалог', '4 задание', '5 задание') 
@@ -20,6 +21,7 @@ keyboard_fourth.row('Удалить клавиатуру')
 keyboard_fourth.add(button_back)
 keyboard_fifth = telebot.types.ReplyKeyboardMarkup(True)
 keyboard_fifth.add(button_back)
+
 
 
 @bot.message_handler(commands=['start', 'Start'])
@@ -108,9 +110,24 @@ def textMessage(textMessage):
 
   if textMessage.text == "5 задание":
     tid = textMessage.chat.id
-    response = requests.get("https://reqres.in/api/users?page=2")
-    
-    bot.send_message(tid, response.text)
-    
+    urlSend = bot.send_message(tid, "Введите ссылку: ")
+    bot.register_next_step_handler(urlSend, url)
+
+def url(url):
+  global req
+  req = requests.get(url.text.split()[0])
+  tid = url.chat.id
+  bot.send_message(tid, req.text)
+  infoSend = bot.send_message(tid, "Введите информацию для вывода: ")
+  bot.register_next_step_handler(infoSend, info)
+
+def info(info):
+  tid = info.chat.id
+  json_get = req.json()
+  length = len(json_get['data'][0])
+  for counter in range(length+1):
+    bot.send_message(tid, json_get['data'][counter][info.text.split()[0]])
+
+
 
 bot.polling()
